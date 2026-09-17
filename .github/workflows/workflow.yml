@@ -1,8 +1,10 @@
+```yaml
 name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build-and-push:
@@ -21,6 +23,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Check DockerHub username
+        run: |
+          if [ -z "${{ secrets.DOCKERHUB_USER_1 }}" ]; then
+            echo "ERROR: DOCKERHUB_USER_1 is empty or unavailable"
+            exit 1
+          fi
+
+          echo "DockerHub username is configured"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -29,3 +40,4 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USER_1 }}/hello-cicd:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USER_1 }}/hello-cicd:latest
+```
