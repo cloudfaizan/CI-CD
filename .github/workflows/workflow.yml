@@ -1,3 +1,4 @@
+```yaml
 name: Build and Push Docker Image
 
 on:
@@ -10,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Login to Docker Hub
@@ -19,10 +20,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER_1 }}
           password: ${{ secrets.DOCKERHUB_USER_1_PWD }}
 
-      - name: Build and Push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USER_1 }}/hello-cicd:latest
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USER_1 }}/hello-cicd:latest .
+
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USER_1 }}/hello-cicd:latest
+```
