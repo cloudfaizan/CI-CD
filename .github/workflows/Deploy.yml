@@ -1,0 +1,60 @@
+name: CI-CD to EC2 Kubernetes (k3s)
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  IMAGE_NAME: dockerfaizan004/ci-cd-app
+  EC2_USER: ec2-user
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER_1 }}
+          password: ${{ secrets.DOCKERHUB_USER_1_PWD }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy K8s manifests to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ env.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "k8s/*"
+          target: "/home/${{ env.EC2_USER }}/ci-cd-app"
+
+      - name: Apply manifests and roll out new image
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ env.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+            kubectl apply -f /home/${{ env.EC2_USER }}/ci-cd-app/k8s/deployment.yaml
+            kubectl apply -f /home/${{ env.EC2_USER }}/ci-cd-app/k8s/service.yaml
+            kubectl set image deployment/ci-cd-app ci-cd-app=${{ env.IMAGE_NAME }}:${{ github.sha }} --record
+            kubectl rollout status deployment/ci-cd-app
