@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: basic-web
-        image: dockerfaizan004/basic-web:latest
+        image: dockerfaizan007/basic-web:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
