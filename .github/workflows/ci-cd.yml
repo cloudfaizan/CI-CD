@@ -28,8 +28,8 @@ jobs:
           context: .
           push: true
           tags: |
-            dockerfaizan004/basic-web:latest
-            dockerfaizan004/basic-web:${{ github.sha }}
+            dockerfaizan007/basic-web:latest
+            dockerfaizan007/basic-web:${{ github.sha }}
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
